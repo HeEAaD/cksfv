@@ -16,13 +16,21 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
 
+#define ZLIB
+
 #include <unistd.h>
 #include <errno.h>
+
+#ifdef ZLIB
+    #include <zlib.h>
+#endif
 
 #include "config.h"
 
 #define BUFFERSIZE 16384	/* (16k) buffer size for reading from the file */
 
+
+#ifndef ZLIB
 static const uint32_t crctable[256] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba,
     0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
@@ -89,14 +97,20 @@ static const uint32_t crctable[256] = {
     0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d,
 };
+#endif
 
-
-int crc32(int fd, uint32_t * main_val)
+int crc32file(int fd, uint32_t * main_val)
 {
     char buf[BUFFERSIZE];
-    char *p;
     int nr;
+
+
+#ifdef ZLIB
+    uint32_t crc = crc32(0,NULL,0);
+#else
+    char *p;
     uint32_t crc = ~0;
+#endif
 
     while (1) {
 	if ((nr = read(fd, buf, sizeof(buf))) < 0) {
@@ -106,12 +120,23 @@ int crc32(int fd, uint32_t * main_val)
 	}
 	if (nr == 0)
 	    break;
+
+#ifdef ZLIB
+    crc = crc32(crc,(const Bytef*)buf,nr);
+#else
 	for (p = buf; nr--; ++p)
 	    crc = (crc >> 8) ^ crctable[(crc ^ *p) & 0xff];
+#endif
+
     }
+
     if (nr < 0)
 	return 1;
 
+#ifdef ZLIB
+    *main_val = crc;
+#else
     *main_val = ~crc;
+#endif
     return 0;
 }

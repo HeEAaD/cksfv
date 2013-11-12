@@ -219,7 +219,7 @@ int readsfv(char *fn, char *dir, int argc, char **argv)
 	    goto next;
 	}
 
-	if (crc32(file, &val)) {
+	if (crc32file(file, &val)) {
 	    /* file error */
 	    if (!QUIET)
 		fprintf(stderr, "%s\n", strerror(errno));

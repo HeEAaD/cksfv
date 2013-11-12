@@ -38,7 +38,7 @@ static int processfile(int fd, const char *fn)
     uint32_t val;
     char *tmpname;
 
-    if (crc32(fd, &val)) {
+    if (crc32file(fd, &val)) {
 	if (!TOTALLY_QUIET)
 	    fprintf(stderr, "cksfv: %s: %s\n", fn, strerror(errno));
 	return 1;
